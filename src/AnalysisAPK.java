@@ -19,7 +19,8 @@ public class AnalysisAPK {
  	private final static String androidJAR = "android.jar";
  	
  	private final static String pathToAPK = "/home/chaitanya/Workspace/CryptAnalyzer/APKsToTest/";
- 	private final static String pathToJARs = "/home/chaitanya/Workspace/CryptAnalyzer/AdditionalJars"; 
+ 	private final static String pathToJARs = "/home/chaitanya/Workspace/CryptAnalyzer/AdditionalJars";
+ 	private final static String pathToAndroidJARS = "/home/chaitanya/Workspace/CryptAnalyzer/lib/AndroidJars";
  			//Alter these if working in a different workspace
     private static String apk ;
     		 
@@ -42,41 +43,43 @@ public class AnalysisAPK {
   
     	
     	apk = args[0];//"TelegramMessenger.apk"
-		System.out.println(apk+" being analyzed");
-
+		System.out.println(apk+" being analyzed."
+				+ "\n Analysis involves 2 steps:"
+				+ "\n1. Taint analysis using previously defined sources and sinks "
+				+ "\n2. Anaylisis of Intermediate Representation to check and log violation of rules."
+				+ "\n\n RULES:"
+				+ "a. Modes used should not be ECB"
+				+ "b. Static Initialization Vectors (IVs) shouldn’t be used"
+				+ "c. Constant encryption keys shouldn’t be used"
+				+ "d. Constant salts shouldn’t be used"
+				+ "e. Password Based Encryption should make use of at least 1000 iterations"
+				+ "f. Secure Random shouldn’t be statically seeded");
     	
-    	//Creating the call graph
-    	CallGraphGen.generateGraph(apk);
+    	runTaintAnalysis(apk);
 
-    	//Dumping it to a txt file, if need be
-    	try
-		{
-    		new File("./CGDumps").mkdir();
-			FileWriter fw = new FileWriter("./CGDumps/"+apk+"__CGDump.txt");
-			fw.append(CallGraphGen.cg.toString());
-			fw.close();
-		}
-		catch(Exception ex)
-		{
-			ex.printStackTrace();
-		}
+    	simpleRuleAnalysis(args);
     	
-    	//Carrying out the taint analysis, specific for the salt and key rules
-    	String[] taintArgs = {pathToAPK+apk,
-    			"/home/chaitanya/Workspace/CryptAnalyzer/lib/AndroidJars"};
-    	try {
-			TaintAnalysis.check(taintArgs);	
-		} catch (IOException | InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+    	//Post-analysis--- compiling results
+    	if(InvokeStaticInstrumenter.flag==0){
+      	  try {
+				FileWriter writer = new FileWriter(logFile);
+				writer.write("None of the said violations found.");
+				writer.flush();
+				writer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+        }
+
+        }
+
+	private static void simpleRuleAnalysis(String[] commandLineArgs) {
+    	List<String> sootArgs = new ArrayList<String>(Arrays.asList(commandLineArgs));
     	System.out.println("=========================================================================================================================");
     	System.out.println("=========================================================================================================================");
     	System.out.println("=========================================Analyzing the apk for Rules now=================================================");
     	System.out.println("=========================================================================================================================");
     	System.out.println("=========================================================================================================================");
-    	
-    	List<String> sootArgs = new ArrayList<String>(Arrays.asList(args));
   	    
           Options .v().set_soot_classpath(
         		  pathToJARs+"android.jar;"+
@@ -120,18 +123,17 @@ public class AnalysisAPK {
           /*
            * Give control to Soot to process all options,InvokeStaticInstrumenter.internalTransform will get called.
            */
-          soot.Main.main(sootArgs.toArray(args));
+          soot.Main.main(sootArgs.toArray(commandLineArgs));
+	}
+
+	private static void runTaintAnalysis(String apkToAnalyze) {
+    	//Carrying out the taint analysis, specific for the salt and key rules
+    	String[] taintArgs = {pathToAPK+apkToAnalyze, pathToAndroidJARS};
+    	try {
+			TaintAnalysis.check(taintArgs);	
+		} catch (IOException | InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		
-          if(InvokeStaticInstrumenter.flag==0){
-        	  try {
-				FileWriter writer = new FileWriter(logFile);
-				writer.write("None of the said violations found.");
-				writer.flush();
-				writer.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-          }
-        }
-      }
+	}
+}

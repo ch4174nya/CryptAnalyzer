@@ -21,9 +21,10 @@ import soot.options.Options;
 public class CallGraphGen {
 	public static CallGraph cg;
 	private final static String pathToAPK = "/home/chaitanya/Workspace/CryptAnalyzer/APKsToTest/";
+ 	private final static String pathToAndroidJARS = "/home/chaitanya/Workspace/CryptAnalyzer/lib/AndroidJars";
  	public static void generateGraph(String apk){
 		apk = pathToAPK+apk;
-		SetupApplication app = new SetupApplication("/home/chaitanya/Workspace/CryptAnalyzer/lib/AndroidJars",
+		SetupApplication app = new SetupApplication(pathToAndroidJARS,
 				apk);		
 		try {
 			app.calculateSourcesSinksEntrypoints("SourcesAndSinks.txt");
@@ -35,7 +36,7 @@ public class CallGraphGen {
 		
 		Options.v().set_src_prec(Options.src_prec_apk);
 		Options.v().set_process_dir(Collections.singletonList(apk));
-		Options.v().set_android_jars("/home/chaitanya/Workspace/CryptAnalyzer/lib/AndroidJars");
+		Options.v().set_android_jars(pathToAndroidJARS);
 		Options.v().set_whole_program(true);
 		Options.v().set_allow_phantom_refs(true);
 		Options.v().set_output_format(Options.output_format_jimple);
