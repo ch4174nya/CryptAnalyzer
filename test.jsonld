@@ -1,0 +1,11 @@
+{
+   "@context": "http://schema.org/",
+   "@type":"Course",
+   "name":"Neural Networks",
+   "description":"Learn about Deep Learning through CNNs and others",
+   "provider":{
+       "@type":"Organization",
+       "name":"NUS",
+       "sameAs":"comp.nus.edu.sg"
+	}
+}
